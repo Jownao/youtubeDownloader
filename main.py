@@ -9,65 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Sistema de internacionalização
-TEXT = {
-    "pt": {
-        "title": "🎬 YouTube Downloader",
-        "subtitle": "**Baixe vídeos e músicas diretamente do YouTube**",
-        "instructions_title": "ℹ️ Instruções",
-        "instructions": [
-            "1. Cole a URL do vídeo",
-            "2. Escolha o tipo de download",
-            "3. Clique no botão de download"
-        ],
-        "warning": "⚠️ **Aviso Legal**  \nSó baixe conteúdo com autorização do autor!",
-        "url_label": "**Cole sua URL do YouTube aqui:**",
-        "url_placeholder": "Ex: https://youtube.com/watch?v=...",
-        "thumbnail": "Thumbnail do Vídeo",
-        "channel": "👤 Canal: {}",
-        "duration": "⏱ Duração: {}",
-        "download_type": "**Selecione o tipo de download:**",
-        "video": "🎥 Vídeo",
-        "music": "🎧 Música",
-        "download_btn": "⬇️ Baixar {}",
-        "loading": "Preparando download...",
-        "error": "❌ Erro: {}",
-        "footer": "Desenvolvido por © Jownao usando Streamlit | pytubefix"
-    },
-    "en": {
-        "title": "🎬 YouTube Downloader",
-        "subtitle": "**Download videos and music directly from YouTube**",
-        "instructions_title": "ℹ️ Instructions",
-        "instructions": [
-            "1. Paste the video URL",
-            "2. Choose download type",
-            "3. Click download button"
-        ],
-        "warning": "⚠️ **Legal Warning**  \nOnly download authorized content!",
-        "url_label": "**Paste your YouTube URL here:**",
-        "url_placeholder": "Ex: https://youtube.com/watch?v=...",
-        "thumbnail": "Video Thumbnail",
-        "channel": "👤 Channel: {}",
-        "duration": "⏱ Duration: {}",
-        "download_type": "**Select download type:**",
-        "video": "🎥 Video",
-        "music": "🎧 Music",
-        "download_btn": "⬇️ Download {}",
-        "loading": "Preparing download...",
-        "error": "❌ Error: {}",
-        "footer": "Made by © Jownao using Streamlit | pytubefix"
-    }
-}
-
-# Inicializar estado de linguagem
-if 'lang' not in st.session_state:
-    st.session_state.lang = 'pt'
-
-# Função para trocar idioma
-def toggle_language():
-    st.session_state.lang = 'en' if st.session_state.lang == 'pt' else 'pt'
-
-# CSS customizado 
+# CSS customizado
 st.markdown("""
 <style>
     .header { padding: 1rem 0; text-align: center; }
@@ -80,60 +22,55 @@ st.markdown("""
 # Componentes da interface
 with st.container():
     st.markdown('<div class="header">', unsafe_allow_html=True)
-    st.title(TEXT[st.session_state.lang]['title'])
-    st.markdown(TEXT[st.session_state.lang]['subtitle'])
+    st.title("🎬 YouTube Downloader")
+    st.markdown("**Baixe vídeos e músicas diretamente do YouTube**")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Barra lateral com seletor de idioma
+# Barra lateral para informações
 with st.sidebar:
-    # Botão de troca de idioma
-    col1, col2 = st.columns([1,3])
-    with col1:
-        st.button(
-            "🇧🇷/🇺🇸" if st.session_state.lang == 'pt' else "🇺🇸/🇧🇷",
-            on_click=toggle_language,
-            help="Switch language" if st.session_state.lang == 'en' else "Mudar idioma"
-        )
-    
-    st.header(TEXT[st.session_state.lang]['instructions_title'])
-    for line in TEXT[st.session_state.lang]['instructions']:
-        st.markdown(line)
+    st.header("ℹ️ Instruções")
+    st.markdown("""
+    1. Cole a URL do vídeo
+    2. Escolha o tipo de download
+    3. Clique no botão de download
+    """)
     st.markdown("---")
-    st.markdown(TEXT[st.session_state.lang]['warning'])
+    st.markdown("⚠️ **Aviso Legal**  \nSó baixe conteúdo com autorização do autor!")
 
 # Widget principal
 url = st.text_input(
-    TEXT[st.session_state.lang]['url_label'],
-    placeholder=TEXT[st.session_state.lang]['url_placeholder']
+    "**Cole sua URL do YouTube aqui:**",
+    placeholder="Ex: https://youtube.com/watch?v=..."
 )
 
 if url:
     try:
         yt = YouTube(url)
         
+        # Layout em colunas para thumbnail e informações
         col1, col2 = st.columns([1, 2])
         
         with col1:
             st.image(
                 yt.thumbnail_url,
-                caption=TEXT[st.session_state.lang]['thumbnail'],
-                use_container_width=True,
+                caption="Thumbnail do Vídeo",
+                use_container_width=True,  # Corrigido aqui
                 width=250
             )
         
         with col2:
             st.subheader(f"🎵 {yt.title}")
-            st.caption(TEXT[st.session_state.lang]['channel'].format(yt.author))
-            duration = f"{yt.length // 60}:{yt.length % 60:02}"
-            st.caption(TEXT[st.session_state.lang]['duration'].format(duration))
+            st.caption(f"👤 Canal: {yt.author}")
+            st.caption(f"⏱ Duração: {yt.length // 60}:{yt.length % 60:02}")
             
             download_type = st.radio(
-                TEXT[st.session_state.lang]['download_type'],
-                [TEXT[st.session_state.lang]['video'], TEXT[st.session_state.lang]['music']],
+                "**Selecione o tipo de download:**",
+                ["🎥 Vídeo", "🎧 Música"],
                 horizontal=True
             )
             
-            if TEXT[st.session_state.lang]['video'] in download_type:
+            # Configurações de download
+            if "Vídeo" in download_type:
                 stream = yt.streams.filter(
                     progressive=True,
                     file_extension="mp4"
@@ -145,30 +82,31 @@ if url:
                 mime_type = "audio/mp3"
                 file_ext = "mp3"
             
+            # Corrigindo o buffer
             buffer = BytesIO()
             
-            with st.spinner(TEXT[st.session_state.lang]['loading']):
-                stream.stream_to_buffer(buffer)
+            with st.spinner("Preparando download..."):
+                stream.stream_to_buffer(buffer)  
                 buffer.seek(0)
             
+            # Botão de download estilizado
             st.download_button(
-                label=TEXT[st.session_state.lang]['download_btn'].format(
-                    TEXT[st.session_state.lang]['video'].split()[-1] if 'video' in download_type.lower() 
-                    else TEXT[st.session_state.lang]['music'].split()[-1]
-                ),
-                data=buffer.getvalue(),
+                label=f"⬇️ Baixar {download_type.split()[-1]}",
+                data=buffer.getvalue(),  
                 file_name=f"{yt.title[:30]}.{file_ext}",
                 mime=mime_type,
-                use_container_width=True
+                use_container_width=True,
+                key=f"download_{file_ext}",
+                help="Clice para iniciar o download"
             )
 
     except Exception as e:
-        st.error(TEXT[st.session_state.lang]['error'].format(str(e)))
+        st.error(f"❌ Erro: {str(e)}")
 
 # Rodapé
 st.markdown("---")
-st.markdown(f"""
+st.markdown("""
 <div style="text-align: center; color: #666; font-size: 0.9em;">
-    {TEXT[st.session_state.lang]['footer']}
+    Desenvolvido por © Jownao usando Streamlit | pytubefix
 </div>
 """, unsafe_allow_html=True)
